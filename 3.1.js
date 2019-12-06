@@ -18,9 +18,12 @@ const getCoordinateIncrementFunc = (direction) => {
   }
 }
 
-const getAllCoordinates = wire => {
+const getAllIntersections = (wires, intersections) => {
 
-  let coordinates = [[0,0]];
+  const [wire, ...otherWires] = wires;
+
+  const coordinates = [[0,0]];
+  const newIntersections = [];
 
   for (let i = 0, l = wire.length; i < l; i++) {
     const [direction, distance] = wire[i];
@@ -30,41 +33,36 @@ const getAllCoordinates = wire => {
     const coordIncrementFunc = getCoordinateIncrementFunc(direction);
   
     for (let j = 1; j <= distance; j++) {
-      coordinates.push(coordIncrementFunc(lastCoords, j));
+      const newCoords = coordIncrementFunc(lastCoords, j);
+      coordinates.push(newCoords);
+      if (!Array.isArray(intersections) || !!intersections.find(([x,y]) => x === newCoords[0] && y === newCoords[1])) {
+        newIntersections.push(newCoords);
+      }
     }
 
   }
+  
+  if (otherWires.length) {
+    return getAllIntersections(otherWires, newIntersections)
+  }
 
-
-  return coordinates;
+  return newIntersections;
 
 }
-
-const containsCoordinates = (arr, [x, y]) => !!arr.find(coords => x === coords[0] && y === coords[1]);
 
 const getAnswer = (o) => {
   const data = o.split(/\n/).map(wireStr => wireStr.split(',').map(str => [ str[0], Number(str.slice(1))]));
 
-  const [wire1Coords, wire2Coords] = data.map(getAllCoordinates).sort((a, b) => b.length - a.length);
-
-  let crossoverCoordinates = [];
-  for (let i = wire1Coords.length; i--;) {
-    console.log(i);
-    const coords = wire1Coords[i];
-    if (containsCoordinates(wire2Coords, coords)) {
-      crossoverCoordinates.push(coords);
-    }
-  }
-
-  console.log(crossoverCoordinates);
+  let crossoverCoordinates = getAllIntersections(data);
   
-  const arrManhattanDistances = crossoverCoordinates.map(([x,y]) => Math.abs(x) + Math.abs(y)).sort((a, b) => a - b);
+  const [ shortestManhattanDistance ] = crossoverCoordinates.map(([x,y]) => Math.abs(x) + Math.abs(y)).sort((a, b) => a - b);
 
-  console.log(arrManhattanDistances);
-  return arrManhattanDistances[1];
+  return shortestManhattanDistance;
 }
 
-console.log(getAnswer(input));
+const answer = getAnswer(input);
+
+console.log(answer);
 
 
 
